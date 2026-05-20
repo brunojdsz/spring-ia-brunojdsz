@@ -8,6 +8,7 @@ import org.springframework.beans.factory.config.SingletonBeanRegistry;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,6 +16,7 @@ import java.util.Base64;
 import java.util.List;
 
 @RestController
+@RequestMapping("ai")
 public class GenerativeAIController {
 
     private final ChatService service;
@@ -52,16 +54,11 @@ public class GenerativeAIController {
                                       @RequestParam(defaultValue = "1024") Integer width){
         ImageResponse response = imageService.generateImage(prompt, quality, qtdImage, height, width);
 
-        String base64 = response.getResults()
-                .get(0)
-                .getOutput()
-                .getB64Json();
+        var images = response.getResults()
+                .stream()
+                .map(image -> image.getOutput().getB64Json())
+                .toList();
 
-        byte[] imageBytes = Base64.getDecoder().decode(base64);
-
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_PNG)
-                .body(imageBytes);
+        return ResponseEntity.ok(images);
     }
 }
